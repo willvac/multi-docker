@@ -1,0 +1,26 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t willvac/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true willvac/react-test npm test
+
+after_success:
+    - docker build -t willvac/multi-client ./client
+    - docker build -t willvac/multi-nginx ./nginx
+    - docker build -t willvac/multi-server ./server
+    - docker build -t willvac/multi-worker ./worker
+    
+    # Login to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    # Take those image and push them to docker hub
+    - docker push willvac/multi-client
+    - docker push willvac/multi-nginx
+    - docker push willvac/multi-server
+    - docker push willvac/multi-worker
+    
